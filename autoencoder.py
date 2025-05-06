@@ -5,7 +5,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from GLOBALS import NORMALISED_STOCKS_PARQUET, AUTOENCODER_MODEL
+from GLOBALS import NORMALISED_STOCKS_PARQUET, AUTOENCODER_MODEL, SHAPE_FEATURES
+from get_data import get_ticketers
 
 class Autoencoder(nn.Module):
     def __init__(self, input_dim):
@@ -34,25 +35,34 @@ class Autoencoder(nn.Module):
         return self.decoder(z)
 
 
-def prepare_data(file_path, sequence_length=10):
+def prepare_data(file_path):
     # Read parquet file
     df = pd.read_parquet(file_path)
-        
-    # Create sequences
-    sequences = []
-    values = df.values
-    for i in range(len(df) - sequence_length + 1):
-        sequences.append(values[i:i+sequence_length])
-    
-    return torch.FloatTensor(sequences)
+
+    # Replace NaN values with 0
+    df = df.fillna(0)
+
+    return torch.FloatTensor(df.values)
 
 def train_autoencoder(X, model, num_epochs=100, batch_size=32):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # CUDA ISSUES:
+    # Not too sure what the issue is, code runs on CPU not GPU
+    # Potentially could be GPU memory issues
+    # Make batch_size=1, that fixes a issue
+
+    device = torch.device("cpu")#"cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device.type}")
+
+    print(torch.version.cuda)
+    print(torch.cuda.get_device_name(0))
+
     X = X.to(device)
     model.to(device)
-    
+    X = X.T
+
     dataset = TensorDataset(X)
+
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     criterion = nn.MSELoss()
@@ -63,14 +73,11 @@ def train_autoencoder(X, model, num_epochs=100, batch_size=32):
         total_loss = 0
         for batch in dataloader:
             data = batch[0]
-            
-            # Flatten the input
-            batch_size, seq_len, features = data.shape
-            data_flat = data.reshape(batch_size, seq_len * features)
-            
+                        
             optimizer.zero_grad()
-            output = model(data_flat)
-            loss = criterion(output, data_flat)
+
+            output = model(data)
+            loss = criterion(output, data)
             loss.backward()
             optimizer.step()
             
@@ -83,16 +90,16 @@ def train_autoencoder(X, model, num_epochs=100, batch_size=32):
     
     return losses
 
-def create_autoencoder(file_path, sequence_length=10):
+def create_autoencoder(file_path):
     # Prepare data
-    X = prepare_data(file_path, sequence_length)
+    X = prepare_data(file_path)
     
     # Create model
-    input_dim = X.shape[1] * X.shape[2]  # sequence_length * num_features
+    input_dim =  X.shape[0]  # sequence_length * num_features
     model = Autoencoder(input_dim)
     
     # Train model
-    losses = train_autoencoder(X, model, num_epochs=100)
+    losses = train_autoencoder(X, model, num_epochs=300)
     
     # Plot training losses
     plt.figure(figsize=(10, 5))
@@ -104,6 +111,53 @@ def create_autoencoder(file_path, sequence_length=10):
     
     torch.save(model.state_dict(), AUTOENCODER_MODEL)
 
+def load_autoencoder(model_path, input_dim):
+    model = Autoencoder(input_dim)
+    model.load_state_dict(torch.load(model_path))
+
+    return model
+
+def get_encoded(model, data):
+
+    model.eval()
+    with torch.no_grad():
+        encoded_data = model.encoder(data)
+    return encoded_data
+
+def save_features(file_path, save_file):
+
+    X = prepare_data(file_path)
+
+    # Load the model and get encoded data
+    model = load_autoencoder(AUTOENCODER_MODEL, input_dim=X.shape[0])
+    encoded_data = get_encoded(model, X.T)
+
+    ticketers = get_ticketers()
+
+    # Create column names for the encoded features
+    columns = ['ticketer'] + [f'encoded_{i}' for i in range(8)]
+
+    # Create a list of rows where each row contains the ticketer and its encoded features
+    save_data = [[ticker] + encoded.tolist() for ticker, encoded in zip(ticketers, encoded_data)]
+
+    # Convert to DataFrame
+    df = pd.DataFrame(save_data, columns=columns)
+    df.to_csv(save_file, index=False)
+    
+
+
 if __name__ == "__main__":
-    model, scaler = create_autoencoder(NORMALISED_STOCKS_PARQUET, sequence_length=10)
-    torch.save(model.state_dict(), AUTOENCODER_MODEL)
+    
+    # # Example usage
+    # file_path = NORMALISED_STOCKS_PARQUET
+
+    # X = prepare_data(file_path)
+
+    # # Load the model and get encoded data
+    # model = load_autoencoder(AUTOENCODER_MODEL, input_dim=X.shape[0])
+    # encoded_data = get_encoded(model, X.T)
+
+    # print(encoded_data.shape)
+    # print(X.shape)
+
+    save_features(NORMALISED_STOCKS_PARQUET, SHAPE_FEATURES)

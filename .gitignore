@@ -5,5 +5,4 @@ __pycache__/
 
 models/
 
-data/stocks.parquet
-data/stocks.duckdb
+data/stocks/

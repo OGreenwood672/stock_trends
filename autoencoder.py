@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from GLOBALS import NORMALISED_STOCKS_PARQUET, AUTOENCODER_MODEL, SHAPE_FEATURES
-from get_data import get_ticketers
+from get_data import get_loaded_ticketers
 
 class Autoencoder(nn.Module):
     def __init__(self, input_dim):
@@ -132,7 +132,7 @@ def save_features(file_path, save_file):
     model = load_autoencoder(AUTOENCODER_MODEL, input_dim=X.shape[0])
     encoded_data = get_encoded(model, X.T)
 
-    ticketers = get_ticketers()
+    ticketers = get_loaded_ticketers()
 
     # Create column names for the encoded features
     columns = ['ticketer'] + [f'encoded_{i}' for i in range(8)]

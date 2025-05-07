@@ -1,5 +1,7 @@
 
-TICKETER_CSV = "./data/constituents.csv"
+TICKETER_CSV = "./data/stocks.csv"
+LOADED_TICKETER_CSV = "./data/loaded_ticketers.csv"
+
 STOCKS_PARQUET = "./data/stocks/stocks.parquet"
 STOCKS_DUCKDB = "./data/stocks/stocks.duckdb"
 

@@ -1,5 +1,8 @@
 
 
-Save file of tickters currently being processed
-
 Create grouping from features.
+
+K Means Clustering on Number of Ticketers, Number of Ticketers - 1, ..., 2
+Count the number of times pairs of ticketers are in the same group and divide by number of ticketers.
+Have a cut off threshold and visualise via nodes and links.
+Alternativly, just stop at cluster at clusters = number of ticketers / 1.5

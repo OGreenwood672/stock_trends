@@ -61,6 +61,8 @@ def load_data_from_parquet(filename):
 
     df = dd.read_parquet(filename)
     df = df.set_index("Date")
+    df = df.reindex(sorted(df.columns), axis=1)
+    
     return df
 
 # def load_data_from_duck(filename):

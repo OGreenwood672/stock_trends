@@ -22,13 +22,15 @@ def main():
     if args.load_data:
         ticketers = get_ticketers()
         data = get_data(ticketers, START_DATE, END_DATE)
-        print(data.head())
+        if data is None:
+            return
+
         process_data()
 
         create_autoencoder(NORMALISED_STOCKS_PARQUET)
         save_features(NORMALISED_STOCKS_PARQUET, SHAPE_FEATURES)
 
-
+    
 
     
 

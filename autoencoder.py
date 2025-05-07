@@ -132,7 +132,7 @@ def save_features(file_path, save_file):
     model = load_autoencoder(AUTOENCODER_MODEL, input_dim=X.shape[0])
     encoded_data = get_encoded(model, X.T)
 
-    ticketers = get_loaded_ticketers()
+    ticketers = sorted(get_loaded_ticketers())
 
     # Create column names for the encoded features
     columns = ['ticketer'] + [f'encoded_{i}' for i in range(8)]

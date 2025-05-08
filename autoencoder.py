@@ -144,7 +144,10 @@ def save_features(file_path, save_file):
     df = pd.DataFrame(save_data, columns=columns)
     df.to_csv(save_file, index=False)
     
-
+def load_features(file_path):
+    df = pd.read_csv(file_path)
+    df.set_index('ticketer', inplace=True)
+    return df
 
 if __name__ == "__main__":
     

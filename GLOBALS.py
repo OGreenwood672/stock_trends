@@ -7,6 +7,8 @@ STOCKS_DUCKDB = "./data/stocks/stocks.duckdb"
 
 NORMALISED_STOCKS_PARQUET = "./data/stocks/normalised_stocks.parquet"
 
+GROUPS_CSV = "./data/groups.csv"
+
 AUTOENCODER_MODEL = "./models/autoencoder.pt"
 
 SHAPE_FEATURES = "./data/shape_features.csv"

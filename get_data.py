@@ -1,4 +1,4 @@
-import dask.dataframe as dd
+import pandas as pd
 from GLOBALS import TICKETER_CSV, START_DATE, END_DATE, STOCKS_PARQUET, STOCKS_DUCKDB, LOADED_TICKETER_CSV
 import yfinance as yf
 import duckdb
@@ -30,8 +30,6 @@ def get_data(ticketers, start_date, end_date):
     loaded_ticketers = get_loaded_ticketers()
     ticketers = list(set(ticketers) - set(loaded_ticketers))
 
-    print(ticketers)
-
     if ticketers:
 
         df = yf.download(ticketers, start=start_date, end=end_date)['Open']
@@ -39,8 +37,8 @@ def get_data(ticketers, start_date, end_date):
         df = df.dropna(axis=1, how='all')
 
         if not df.empty:
-            save_ticketers(list(map(lambda k: k.split(",")[0], df.columns)))
             save_data(STOCKS_PARQUET, df)
+            save_ticketers(list(map(lambda k: k.split(",")[0], df.columns)))
 
     return load_data_from_parquet(STOCKS_PARQUET)
 
@@ -49,9 +47,11 @@ def save_data(filename, new_data):
     curr_data = load_data_from_parquet(filename)
     # Combine the new data with the existing data
     if curr_data is not None:
-        new_data = dd.concat([curr_data, new_data])
+        new_data = pd.concat([curr_data, new_data])
     
-    os.remove(filename)
+    # if os.path.exists(filename):
+    #     os.remove(filename)
+
     new_data.to_parquet(filename, engine='pyarrow')
 
 def load_data_from_parquet(filename):
@@ -59,9 +59,8 @@ def load_data_from_parquet(filename):
     if not os.path.exists(filename):
         return None
 
-    df = dd.read_parquet(filename)
-    df = df.set_index("Date")
-    df = df.reindex(sorted(df.columns), axis=1)
+    df = pd.read_parquet(filename)
+    df = df.loc[:, sorted(df.columns)]
     
     return df
 

@@ -1,12 +1,12 @@
-import dask.dataframe as dd
 import os
 
 from process_data import process_data
 from get_data import get_ticketers, get_data, save_data
-from autoencoder import create_autoencoder, save_features
+from autoencoder import create_autoencoder, save_features, load_features
 import argparse
+from k_means import perform_kmeans
 
-from GLOBALS import STOCKS_PARQUET, START_DATE, END_DATE, NORMALISED_STOCKS_PARQUET, SHAPE_FEATURES
+from GLOBALS import STOCKS_PARQUET, START_DATE, END_DATE, NORMALISED_STOCKS_PARQUET, SHAPE_FEATURES, GROUPS_CSV
 
 def main():
 
@@ -29,11 +29,14 @@ def main():
 
         create_autoencoder(NORMALISED_STOCKS_PARQUET)
         save_features(NORMALISED_STOCKS_PARQUET, SHAPE_FEATURES)
-
     
+    features = load_features(SHAPE_FEATURES)
+    results, centers = perform_kmeans(features, n_clusters=400)
 
+    results = results[['Cluster']].reset_index()
+    results = results.sort_values('Cluster')
     
-
+    results.to_csv(GROUPS_CSV, index=False)
 
 
 if __name__ == "__main__":

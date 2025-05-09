@@ -146,7 +146,6 @@ def save_features(file_path, save_file):
     
 def load_features(file_path):
     df = pd.read_csv(file_path)
-    df.set_index('ticketer', inplace=True)
     return df
 
 if __name__ == "__main__":

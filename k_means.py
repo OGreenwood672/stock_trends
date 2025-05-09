@@ -9,7 +9,7 @@ def preprocess_data(df):
     Preprocess the data by scaling the features
     """
     scaler = StandardScaler()
-    features = df.iloc[:, :8]  # Select first 8 columns as features
+    features = df.iloc[:, 1:9]
     scaled_features = scaler.fit_transform(features)
     return scaled_features
 
